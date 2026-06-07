@@ -1,0 +1,584 @@
+WITH tb_pedidos AS (
+
+    SELECT *
+    FROM workspace.olist.olist_orders_dataset
+    WHERE order_purchase_timestamp < '2018-07-01'
+
+),
+
+tb_base AS (
+
+    SELECT DISTINCT
+        oi.seller_id,
+        c.customer_unique_id,
+        o.order_id,
+        CAST(o.order_purchase_timestamp AS DATE) AS dt_compra,
+
+        DATEDIFF(
+            DATE('2018-07-01'),
+            CAST(o.order_purchase_timestamp AS DATE)
+        ) AS dias_ref
+
+    FROM tb_pedidos o
+
+    INNER JOIN workspace.olist.olist_order_items_dataset oi
+        ON o.order_id = oi.order_id
+
+    INNER JOIN workspace.olist.olist_customers_dataset c
+        ON o.customer_id = c.customer_id
+
+),
+
+/* ==========================================
+   D28 = últimos 28 dias
+   ========================================== */
+
+d28 AS (
+
+    SELECT *
+    FROM tb_base
+    WHERE dias_ref <= 28
+
+),
+
+cliente_d28 AS (
+
+    SELECT
+        seller_id,
+        customer_unique_id,
+        COUNT(DISTINCT order_id) AS qtd_pedidos
+
+    FROM d28
+
+    GROUP BY
+        seller_id,
+        customer_unique_id
+
+),
+
+metricas_d28 AS (
+
+    SELECT
+        seller_id,
+
+        COUNT(*) AS qtd_clientes_d28,
+
+        COUNT(
+            CASE
+                WHEN qtd_pedidos > 1 THEN 1
+            END
+        ) * 1.0
+        / COUNT(*) AS taxa_recompra_d28,
+
+        SUM(qtd_pedidos) * 1.0
+        / COUNT(*) AS avg_pedidos_cliente_d28
+
+    FROM cliente_d28
+
+    GROUP BY seller_id
+
+),
+
+/* ==========================================
+   Primeira compra por seller/cliente
+   ========================================== */
+
+primeira_compra_seller AS (
+
+    SELECT
+        seller_id,
+        customer_unique_id,
+        MIN(dt_compra) AS primeira_compra
+
+    FROM tb_base
+
+    GROUP BY
+        seller_id,
+        customer_unique_id
+
+),
+
+/* ==========================================
+D56
+========================================== */
+
+d56 AS (
+
+SELECT *
+FROM tb_base
+WHERE dias_ref <= 56
+
+),
+
+cliente_d56 AS (
+
+SELECT
+    seller_id,
+    customer_unique_id,
+    COUNT(DISTINCT order_id) AS qtd_pedidos
+FROM d56
+GROUP BY seller_id, customer_unique_id
+
+
+),
+
+metricas_d56 AS (
+
+SELECT
+    seller_id,
+    COUNT(*) AS qtd_clientes_d56,
+
+    COUNT(
+        CASE WHEN qtd_pedidos > 1 THEN 1 END
+    ) * 1.0 / COUNT(*) AS taxa_recompra_d56,
+
+    SUM(qtd_pedidos) * 1.0
+    / COUNT(*) AS avg_pedidos_cliente_d56
+
+FROM cliente_d56
+GROUP BY seller_id
+
+),
+
+novos_clientes_d56 AS (
+
+SELECT
+    seller_id,
+
+    DATEDIFF(
+        DATE('2018-07-01'),
+        MAX(primeira_compra)
+    ) AS dias_desde_ultimo_cliente_novo_d56
+
+FROM primeira_compra_seller
+
+WHERE DATEDIFF(
+    DATE('2018-07-01'),
+    primeira_compra
+) <= 56
+
+GROUP BY seller_id
+
+),
+
+clientes_ant_d56 AS (
+
+SELECT DISTINCT
+    seller_id,
+    customer_unique_id
+FROM tb_base
+WHERE dias_ref > 56
+  AND dias_ref <= 112
+
+),
+
+clientes_atual_d56 AS (
+
+SELECT DISTINCT
+    seller_id,
+    customer_unique_id
+FROM tb_base
+WHERE dias_ref <= 56
+
+),
+
+base_churn_d56 AS (
+
+
+SELECT
+    a.seller_id,
+
+    COUNT(*) AS clientes_anteriores,
+
+    SUM(
+        CASE
+            WHEN b.customer_unique_id IS NULL THEN 1
+            ELSE 0
+        END
+    ) AS clientes_perdidos
+
+FROM clientes_ant_d56 a
+
+LEFT JOIN clientes_atual_d56 b
+    ON a.seller_id = b.seller_id
+   AND a.customer_unique_id = b.customer_unique_id
+
+GROUP BY a.seller_id
+
+
+),
+
+tempo_medio_compra_d56 AS (
+
+
+SELECT
+    seller_id,
+
+    clientes_perdidos * 1.0
+    / clientes_anteriores
+    AS tempoMedioPorCompra_d56
+
+FROM base_churn_d56
+
+
+),
+
+/* ==========================================
+D365
+========================================== */
+
+d365 AS (
+
+SELECT *
+FROM tb_base
+WHERE dias_ref <= 365
+
+
+),
+
+cliente_d365 AS (
+
+
+SELECT
+    seller_id,
+    customer_unique_id,
+    COUNT(DISTINCT order_id) AS qtd_pedidos
+FROM d365
+GROUP BY seller_id, customer_unique_id
+
+
+),
+
+metricas_d365 AS (
+
+
+SELECT
+    seller_id,
+    COUNT(*) AS qtd_clientes_d365,
+
+    COUNT(
+        CASE WHEN qtd_pedidos > 1 THEN 1 END
+    ) * 1.0 / COUNT(*) AS taxa_recompra_d365,
+
+    SUM(qtd_pedidos) * 1.0
+    / COUNT(*) AS avg_pedidos_cliente_d365
+
+FROM cliente_d365
+GROUP BY seller_id
+
+
+),
+
+novos_clientes_d365 AS (
+
+
+SELECT
+    seller_id,
+
+    DATEDIFF(
+        DATE('2018-07-01'),
+        MAX(primeira_compra)
+    ) AS dias_desde_ultimo_cliente_novo_d365
+
+FROM primeira_compra_seller
+
+WHERE DATEDIFF(
+    DATE('2018-07-01'),
+    primeira_compra
+) <= 365
+
+GROUP BY seller_id
+
+
+),
+
+clientes_ant_d365 AS (
+
+
+SELECT DISTINCT
+    seller_id,
+    customer_unique_id
+FROM tb_base
+WHERE dias_ref > 365
+  AND dias_ref <= 730
+
+
+),
+
+clientes_atual_d365 AS (
+
+SELECT DISTINCT
+    seller_id,
+    customer_unique_id
+FROM tb_base
+WHERE dias_ref <= 365
+
+
+),
+
+base_churn_d365 AS (
+
+
+SELECT
+    a.seller_id,
+
+    COUNT(*) AS clientes_anteriores,
+
+    SUM(
+        CASE
+            WHEN b.customer_unique_id IS NULL THEN 1
+            ELSE 0
+        END
+    ) AS clientes_perdidos
+
+FROM clientes_ant_d365 a
+
+LEFT JOIN clientes_atual_d365 b
+    ON a.seller_id = b.seller_id
+   AND a.customer_unique_id = b.customer_unique_id
+
+GROUP BY a.seller_id
+
+
+),
+
+tempo_medio_compra_d365 AS (
+
+
+SELECT
+    seller_id,
+
+    clientes_perdidos * 1.0
+    / clientes_anteriores
+    AS tempoMedioPorCompra_d365
+
+FROM base_churn_d365
+
+),
+
+/* ==========================================
+VIDA
+========================================== */
+
+cliente_vida AS (
+
+SELECT
+    seller_id,
+    customer_unique_id,
+    COUNT(DISTINCT order_id) AS qtd_pedidos
+
+FROM tb_base
+
+GROUP BY seller_id, customer_unique_id
+
+
+),
+
+metricas_vida AS (
+
+
+SELECT
+    seller_id,
+
+    COUNT(*) AS qtd_clientes_vida,
+
+    COUNT(
+        CASE WHEN qtd_pedidos > 1 THEN 1 END
+    ) * 1.0 / COUNT(*) AS taxa_recompra_vida,
+
+    SUM(qtd_pedidos) * 1.0
+    / COUNT(*) AS avg_pedidos_cliente_vida
+
+FROM cliente_vida
+
+GROUP BY seller_id
+
+
+),
+
+novos_clientes_vida AS (
+
+
+SELECT
+    seller_id,
+
+    DATEDIFF(
+        DATE('2018-07-01'),
+        MAX(primeira_compra)
+    ) AS dias_desde_ultimo_cliente_novo_vida
+
+FROM primeira_compra_seller
+
+GROUP BY seller_id
+
+
+)
+,
+
+/* ==========================================
+   Último cliente novo adquirido no D28
+   ========================================== */
+
+novos_clientes_d28 AS (
+
+    SELECT
+        seller_id,
+
+        DATEDIFF(
+            DATE('2018-07-01'),
+            MAX(primeira_compra)
+        ) AS dias_desde_ultimo_cliente_novo_d28
+
+    FROM primeira_compra_seller
+
+    WHERE DATEDIFF(
+              DATE('2018-07-01'),
+              primeira_compra
+          ) <= 28
+
+    GROUP BY seller_id
+
+),
+
+/* ==========================================
+   Clientes ativos período anterior
+   29 a 56 dias atrás
+   ========================================== */
+
+clientes_ant_d28 AS (
+
+    SELECT DISTINCT
+        seller_id,
+        customer_unique_id
+
+    FROM tb_base
+
+    WHERE dias_ref > 28
+      AND dias_ref <= 56
+
+),
+
+/* ==========================================
+   Clientes ativos período atual
+   ========================================== */
+
+clientes_atual_d28 AS (
+
+    SELECT DISTINCT
+        seller_id,
+        customer_unique_id
+
+    FROM tb_base
+
+    WHERE dias_ref <= 28
+
+),
+
+/* ==========================================
+   Churn
+   ========================================== */
+
+base_churn_d28 AS (
+
+    SELECT
+        a.seller_id,
+
+        COUNT(*) AS clientes_anteriores,
+
+        SUM(
+            CASE
+                WHEN b.customer_unique_id IS NULL THEN 1
+                ELSE 0
+            END
+        ) AS clientes_perdidos
+
+    FROM clientes_ant_d28 a
+
+    LEFT JOIN clientes_atual_d28 b
+        ON a.seller_id = b.seller_id
+       AND a.customer_unique_id = b.customer_unique_id
+
+    GROUP BY a.seller_id
+
+),
+
+tempo_medio_compra_d28 AS (
+
+    SELECT
+        seller_id,
+
+        clientes_perdidos * 1.0
+        / clientes_anteriores
+        AS tempoMedioPorCompra_d28
+
+    FROM base_churn_d28
+
+)
+
+/* ==========================================
+   Resultado final
+   ========================================== */
+SELECT
+
+COALESCE(
+    d28.seller_id,
+    d56.seller_id,
+    d365.seller_id,
+    vida.seller_id
+) AS seller_id,
+
+d28.qtd_clientes_d28,
+d28.taxa_recompra_d28,
+d28.avg_pedidos_cliente_d28,
+n28.dias_desde_ultimo_cliente_novo_d28,
+COALESCE(t28.tempoMedioPorCompra_d28,0) AS tempoMedioPorCompra_d28,
+
+d56.qtd_clientes_d56,
+d56.taxa_recompra_d56,
+d56.avg_pedidos_cliente_d56,
+n56.dias_desde_ultimo_cliente_novo_d56,
+COALESCE(t56.tempoMedioPorCompra_d56,0) AS tempoMedioPorCompra_d56,
+
+d365.qtd_clientes_d365,
+d365.taxa_recompra_d365,
+d365.avg_pedidos_cliente_d365,
+n365.dias_desde_ultimo_cliente_novo_d365,
+COALESCE(t365.tempoMedioPorCompra_d365,0) AS tempoMedioPorCompra_d365,
+
+vida.qtd_clientes_vida,
+vida.taxa_recompra_vida,
+vida.avg_pedidos_cliente_vida,
+nvida.dias_desde_ultimo_cliente_novo_vida
+
+
+FROM metricas_d28 d28
+
+LEFT JOIN novos_clientes_d28 n28
+ON d28.seller_id = n28.seller_id
+
+LEFT JOIN tempo_medio_compra_d28 t28
+ON d28.seller_id = t28.seller_id
+
+FULL OUTER JOIN metricas_d56 d56
+ON d28.seller_id = d56.seller_id
+
+LEFT JOIN novos_clientes_d56 n56
+ON d56.seller_id = n56.seller_id
+
+LEFT JOIN tempo_medio_compra_d56 t56
+ON d56.seller_id = t56.seller_id
+
+FULL OUTER JOIN metricas_d365 d365
+ON COALESCE(d28.seller_id,d56.seller_id) = d365.seller_id
+
+LEFT JOIN novos_clientes_d365 n365
+ON d365.seller_id = n365.seller_id
+
+LEFT JOIN tempo_medio_compra_d365 t365
+ON d365.seller_id = t365.seller_id
+
+FULL OUTER JOIN metricas_vida vida
+ON COALESCE(d28.seller_id,d56.seller_id,d365.seller_id) = vida.seller_id
+
+LEFT JOIN novos_clientes_vida nvida
+ON vida.seller_id = nvida.seller_id
