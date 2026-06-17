@@ -1,10 +1,8 @@
-DECLARE VARIABLE deploy_date DATE = '2018-07-01';
-
 -- 1 Tabela base de pedidos com filtro de safra embutido
 WITH tb_pedidos AS (
   SELECT order_id, order_purchase_timestamp
   FROM workspace.olist.orders
-  WHERE order_purchase_timestamp < deploy_date
+  WHERE order_purchase_timestamp < '{date}'
 ),
 
 -- 2 Tabela base de itens
@@ -35,10 +33,10 @@ tb_seller_category_list AS (
     SELECT
         seller_id
         , product_category_name
-        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN 1 ELSE 0 END) AS hadCatSale14d
-        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN 1 ELSE 0 END) AS hadCatSale28d
-        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN 1 ELSE 0 END) AS hadCatSale56d
-        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN 1 ELSE 0 END) AS hadCatSale365d
+        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN 1 ELSE 0 END) AS hadCatSale14d
+        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN 1 ELSE 0 END) AS hadCatSale28d
+        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN 1 ELSE 0 END) AS hadCatSale56d
+        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN 1 ELSE 0 END) AS hadCatSale365d
         , 1 AS hadCatSaleVida
     FROM tb_itens
     GROUP BY seller_id, product_category_name
@@ -49,10 +47,10 @@ tb_seller_product_list AS (
     SELECT
         seller_id
         , product_id
-        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN 1 ELSE 0 END) AS hadProdSale14d
-        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN 1 ELSE 0 END) AS hadProdSale28d
-        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN 1 ELSE 0 END) AS hadProdSale56d
-        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN 1 ELSE 0 END) AS hadProdSale365d
+        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN 1 ELSE 0 END) AS hadProdSale14d
+        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN 1 ELSE 0 END) AS hadProdSale28d
+        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN 1 ELSE 0 END) AS hadProdSale56d
+        , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN 1 ELSE 0 END) AS hadProdSale365d
         , 1 AS hadProdSaleVida
     FROM tb_itens
     GROUP BY seller_id, product_id
@@ -199,70 +197,70 @@ tb_atributos_produtos AS (
 tb_seller_metrics AS (
   SELECT
     seller_id
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN COALESCE(price, 0) ELSE 0 END) AS vlReceitaTotD14
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN COALESCE(price, 0) ELSE 0 END) AS vlReceitaTotD28
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN COALESCE(price, 0) ELSE 0 END) AS vlReceitaTotD56
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN COALESCE(price, 0) ELSE 0 END) AS vlReceitaTotD365
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN COALESCE(price, 0) ELSE 0 END) AS vlReceitaTotD14
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN COALESCE(price, 0) ELSE 0 END) AS vlReceitaTotD28
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN COALESCE(price, 0) ELSE 0 END) AS vlReceitaTotD56
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN COALESCE(price, 0) ELSE 0 END) AS vlReceitaTotD365
     , SUM(COALESCE(price, 0)) AS vlReceitaTotVida
 
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN COALESCE(freight_value, 0) ELSE 0 END) AS vlFreteTotD14
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN COALESCE(freight_value, 0) ELSE 0 END) AS vlFreteTotD28
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN COALESCE(freight_value, 0) ELSE 0 END) AS vlFreteTotD56
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN COALESCE(freight_value, 0) ELSE 0 END) AS vlFreteTotD365
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN COALESCE(freight_value, 0) ELSE 0 END) AS vlFreteTotD14
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN COALESCE(freight_value, 0) ELSE 0 END) AS vlFreteTotD28
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN COALESCE(freight_value, 0) ELSE 0 END) AS vlFreteTotD56
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN COALESCE(freight_value, 0) ELSE 0 END) AS vlFreteTotD365
     , SUM(COALESCE(freight_value, 0)) AS vlFreteTotVida
 
-    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN product_weight_kg END) AS vlMediaPesoProdutoD14
-    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN product_weight_kg END) AS vlMediaPesoProdutoD28
-    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN product_weight_kg END) AS vlMediaPesoProdutoD56
-    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN product_weight_kg END) AS vlMediaPesoProdutoD365
+    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN product_weight_kg END) AS vlMediaPesoProdutoD14
+    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN product_weight_kg END) AS vlMediaPesoProdutoD28
+    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN product_weight_kg END) AS vlMediaPesoProdutoD56
+    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN product_weight_kg END) AS vlMediaPesoProdutoD365
     , MEAN(product_weight_kg) AS vlMediaPesoProdutoVida
 
-    , MIN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN product_weight_kg END) AS vlMinPesoProdutoD14
-    , MIN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN product_weight_kg END) AS vlMinPesoProdutoD28
-    , MIN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN product_weight_kg END) AS vlMinPesoProdutoD56
-    , MIN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN product_weight_kg END) AS vlMinPesoProdutoD365
+    , MIN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN product_weight_kg END) AS vlMinPesoProdutoD14
+    , MIN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN product_weight_kg END) AS vlMinPesoProdutoD28
+    , MIN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN product_weight_kg END) AS vlMinPesoProdutoD56
+    , MIN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN product_weight_kg END) AS vlMinPesoProdutoD365
     , MIN(product_weight_kg) AS vlMinPesoProdutoVida
 
-    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN product_weight_kg END, 0.25) AS vlP25PesoProdutoD14
-    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN product_weight_kg END, 0.25) AS vlP25PesoProdutoD28
-    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN product_weight_kg END, 0.25) AS vlP25PesoProdutoD56
-    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN product_weight_kg END, 0.25) AS vlP25PesoProdutoD365
+    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN product_weight_kg END, 0.25) AS vlP25PesoProdutoD14
+    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN product_weight_kg END, 0.25) AS vlP25PesoProdutoD28
+    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN product_weight_kg END, 0.25) AS vlP25PesoProdutoD56
+    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN product_weight_kg END, 0.25) AS vlP25PesoProdutoD365
     , PERCENTILE(product_weight_kg, 0.25) AS vlP25PesoProdutoVida
 
-    , MEDIAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN product_weight_kg END) AS vlMedianaPesoProdutoD14
-    , MEDIAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN product_weight_kg END) AS vlMedianaPesoProdutoD28
-    , MEDIAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN product_weight_kg END) AS vlMedianaPesoProdutoD56
-    , MEDIAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN product_weight_kg END) AS vlMedianaPesoProdutoD365
+    , MEDIAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN product_weight_kg END) AS vlMedianaPesoProdutoD14
+    , MEDIAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN product_weight_kg END) AS vlMedianaPesoProdutoD28
+    , MEDIAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN product_weight_kg END) AS vlMedianaPesoProdutoD56
+    , MEDIAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN product_weight_kg END) AS vlMedianaPesoProdutoD365
     , MEDIAN(product_weight_kg) AS vlMedianaPesoProdutoVida
 
-    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN product_weight_kg END, 0.75) AS vlP75PesoProdutoD14
-    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN product_weight_kg END, 0.75) AS vlP75PesoProdutoD28
-    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN product_weight_kg END, 0.75) AS vlP75PesoProdutoD56
-    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN product_weight_kg END, 0.75) AS vlP75PesoProdutoD365
+    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN product_weight_kg END, 0.75) AS vlP75PesoProdutoD14
+    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN product_weight_kg END, 0.75) AS vlP75PesoProdutoD28
+    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN product_weight_kg END, 0.75) AS vlP75PesoProdutoD56
+    , PERCENTILE(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN product_weight_kg END, 0.75) AS vlP75PesoProdutoD365
     , PERCENTILE(product_weight_kg, 0.75) AS vlP75PesoProdutoVida
 
-    , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN product_weight_kg END) AS vlMaxPesoProdutoD14
-    , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN product_weight_kg END) AS vlMaxPesoProdutoD28
-    , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN product_weight_kg END) AS vlMaxPesoProdutoD56
-    , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN product_weight_kg END) AS vlMaxPesoProdutoD365
+    , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN product_weight_kg END) AS vlMaxPesoProdutoD14
+    , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN product_weight_kg END) AS vlMaxPesoProdutoD28
+    , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN product_weight_kg END) AS vlMaxPesoProdutoD56
+    , MAX(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN product_weight_kg END) AS vlMaxPesoProdutoD365
     , MAX(product_weight_kg) AS vlMaxPesoProdutoVida
 
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN product_weight_kg ELSE 0 END) AS vlTotalPesoProdutoD14
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN product_weight_kg ELSE 0 END) AS vlTotalPesoProdutoD28
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN product_weight_kg ELSE 0 END) AS vlTotalPesoProdutoD56
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN product_weight_kg ELSE 0 END) AS vlTotalPesoProdutoD365
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN product_weight_kg ELSE 0 END) AS vlTotalPesoProdutoD14
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN product_weight_kg ELSE 0 END) AS vlTotalPesoProdutoD28
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN product_weight_kg ELSE 0 END) AS vlTotalPesoProdutoD56
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN product_weight_kg ELSE 0 END) AS vlTotalPesoProdutoD365
     , SUM(product_weight_kg) AS vlTotalPesoProdutoVida
 
-    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN product_cubic_volume_cm3 END) AS vlMediaCubagemProdutoD14
-    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN product_cubic_volume_cm3 END) AS vlMediaCubagemProdutoD28
-    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN product_cubic_volume_cm3 END) AS vlMediaCubagemProdutoD56
-    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN product_cubic_volume_cm3 END) AS vlMediaCubagemProdutoD365
+    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN product_cubic_volume_cm3 END) AS vlMediaCubagemProdutoD14
+    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN product_cubic_volume_cm3 END) AS vlMediaCubagemProdutoD28
+    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN product_cubic_volume_cm3 END) AS vlMediaCubagemProdutoD56
+    , MEAN(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN product_cubic_volume_cm3 END) AS vlMediaCubagemProdutoD365
     , MEAN(product_cubic_volume_cm3) AS vlMediaCubagemProdutoVida
 
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN product_cubic_volume_cm3 ELSE 0 END) AS vlTotalCubagemProdutoD14
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN product_cubic_volume_cm3 ELSE 0 END) AS vlTotalCubagemProdutoD28
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN product_cubic_volume_cm3 ELSE 0 END) AS vlTotalCubagemProdutoD56
-    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN product_cubic_volume_cm3 ELSE 0 END) AS vlTotalCubagemProdutoD365
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN product_cubic_volume_cm3 ELSE 0 END) AS vlTotalCubagemProdutoD14
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN product_cubic_volume_cm3 ELSE 0 END) AS vlTotalCubagemProdutoD28
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN product_cubic_volume_cm3 ELSE 0 END) AS vlTotalCubagemProdutoD56
+    , SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN product_cubic_volume_cm3 ELSE 0 END) AS vlTotalCubagemProdutoD365
     , SUM(product_cubic_volume_cm3) AS vlTotalCubagemProdutoVida
   FROM tb_itens
   GROUP BY seller_id
@@ -299,10 +297,10 @@ tb_cat_receita AS (
     seller_id,
     product_category_name,
 
-    SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 14) THEN COALESCE(price, 0) ELSE 0 END) AS vlTotalReceitaD14,
-    SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 28) THEN COALESCE(price, 0) ELSE 0 END) AS vlTotalReceitaD28,
-    SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 56) THEN COALESCE(price, 0) ELSE 0 END) AS vlTotalReceitaD56,
-    SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB(deploy_date, 365) THEN COALESCE(price, 0) ELSE 0 END) AS vlTotalReceitaD365,
+    SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 14) THEN COALESCE(price, 0) ELSE 0 END) AS vlTotalReceitaD14,
+    SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 28) THEN COALESCE(price, 0) ELSE 0 END) AS vlTotalReceitaD28,
+    SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 56) THEN COALESCE(price, 0) ELSE 0 END) AS vlTotalReceitaD56,
+    SUM(CASE WHEN order_purchase_timestamp >= DATE_SUB('{date}', 365) THEN COALESCE(price, 0) ELSE 0 END) AS vlTotalReceitaD365,
     SUM(COALESCE(price, 0)) AS vlTotalReceitaVida
 
   FROM tb_itens
@@ -406,7 +404,7 @@ tb_top_categorias AS (
 
 tb_product_feature_store AS (
   SELECT
-    t1.seller_id
+    t1.seller_id as idSeller
 
     -- Diversidade de catálogo
     , t1.vlCategoriasDistintasD14
@@ -557,6 +555,7 @@ tb_product_feature_store AS (
     ON t1.seller_id = t7.seller_id
 )
 
-SELECT *
+SELECT '{date}' AS dtRef,
+       *
 FROM tb_product_feature_store
-ORDER BY seller_id;
+ORDER BY idSeller;
